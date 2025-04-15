@@ -1,0 +1,198 @@
+{% extends 'vrp/base.html' %} 
+{% load static %} 
+{% block title %}Route Optimizer - VRP{% endblock %} {
+
+{% block extra_head %}
+    {# Add any CSS specific to this page here if needed #}
+    <style>
+        .error { 
+            color: #D8000C; background-color: #FFD2D2; border: 1px solid #D8000C;
+            padding: 10px; margin-top: 10px; border-radius: 0.375rem; 
+        }
+         #location-status { margin-left: 0.5rem; font-style: italic; } 
+    </style>
+{% endblock %}
+
+
+{% block content %} {# Main content for this page #}
+
+    <header class="mb-6 text-center">
+        <h1 class="text-3xl font-bold text-gray-800">Vehicle Routing Optimizer</h1>
+        <p class="text-gray-600 mt-1">Enter parameters below or use your current location.</p>
+    </header>
+
+    <section class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Optimization Parameters</h2>
+        <form method="POST" id="vrp-form" class="space-y-4">
+            {% csrf_token %}
+            {# --- Form inputs remain the same as your styled version --- #}
+            <div>
+                <label for="location_name" class="block text-sm font-medium text-gray-700 mb-1">Center Location:</label>
+                 <div class="flex items-center space-x-2">
+                    <input type="text" id="location_name" name="location_name"
+                           value="{{ submitted_location|default:'Vellore, India' }}"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="e.g., City, Address">
+                    <button type="button" id="use-current-location-btn" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap">
+                        Use Current Location
+                    </button>
+                </div>
+                 <span id="location-status" class="text-sm italic text-gray-500 mt-1 block"></span>
+            </div>
+            <input type="hidden" id="latitude" name="latitude" value="{{ request.POST.latitude|default:'' }}">
+            <input type="hidden" id="longitude" name="longitude" value="{{ request.POST.longitude|default:'' }}">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label for="num_customers" class="block text-sm font-medium text-gray-700 mb-1">Num Customers:</label>
+                    <input type="number" id="num_customers" name="num_customers" value="{{ request.POST.num_customers|default:25 }}" min="5" max="50" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="num_vehicles" class="block text-sm font-medium text-gray-700 mb-1">Num Vehicles:</label>
+                    <input type="number" id="num_vehicles" name="num_vehicles" value="{{ request.POST.num_vehicles|default:5 }}" min="1" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                 <div>
+                    <label for="capacity" class="block text-sm font-medium text-gray-700 mb-1">Vehicle Capacity:</label>
+                    <input type="number" id="capacity" name="capacity" value="{{ request.POST.capacity|default:35 }}" min="10" max="300" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="avg_demand" class="block text-sm font-medium text-gray-700 mb-1">Avg Demand/Cust:</label>
+                    <input type="number" id="avg_demand" name="avg_demand" value="{{ request.POST.avg_demand|default:6 }}" min="1" max="50" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+            </div>
+            <div class="pt-4">
+                 <button type="submit" class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                    Optimize Routes
+                </button>
+            </div>
+        </form>
+    </section>
+
+    {% if error %}
+        <section class="mb-8">
+             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong class="font-bold">Error: </strong>
+                <span class="block sm:inline">{{ error }}</span>
+            </div>
+        </section>
+    {% endif %}
+
+    {% if result %}
+        <section class="results bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                Optimization Results for {% if result.center_coords %}Area near (~{{ result.center_coords.0|floatformat:4 }}, {{ result.center_coords.1|floatformat:4 }}){% else %}Selected Area{% endif %}
+            </h2>
+            <div class="space-y-2 text-gray-700 text-sm">
+                <p><strong class="font-medium">Status:</strong> <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{ result.status }}</span></p>
+                <p><strong class="font-medium">Total Optimized Distance:</strong> {{ result.objective_distance_meters }} meters ({{ result.distance_km|floatformat:2 }} km)</p>
+                <p><strong class="font-medium">Total Load Delivered:</strong> {{ result.total_load_delivered }}</p>
+                <p><strong class="font-medium">Vehicles Used:</strong> {{ result.routes|length }}</p>
+            </div>
+
+            <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">Map of Optimized Routes</h3>
+            <div id="map" class="w-full border rounded-md overflow-hidden shadow-sm"></div>
+
+            {# Embed data safely for JavaScript (No changes needed here) #}
+            {{ result.center_coords|json_script:"center-coords-data" }}
+            {{ result.locations|json_script:"locations-data" }}
+            {{ result.routes|json_script:"routes-data" }}
+            {{ result.demands|json_script:"demands-data" }}
+        </section>
+    {% endif %} {# End if result #}
+
+{% endblock %}
+
+
+{% block javascript %}
+    {# JavaScript specific to this page #}
+
+    {% if result %}
+    <script>
+        // --- Leaflet Map Initialization and Drawing Script ---
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('center-coords-data')) {
+                try {
+                    var centerCoordsData = JSON.parse(document.getElementById('center-coords-data').textContent);
+                    var locationsData = JSON.parse(document.getElementById('locations-data').textContent);
+                    var routesData = JSON.parse(document.getElementById('routes-data').textContent);
+                    var demandsData = JSON.parse(document.getElementById('demands-data').textContent);
+                    var map = L.map('map').setView(centerCoordsData, 13);
+                    var depotCoords = locationsData[0];
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(map);
+                    L.marker(depotCoords, {
+                        icon: L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] })
+                    }).addTo(map).bindPopup("<b>Depot / Center (Node 0)</b>");
+                    locationsData.forEach(function(loc, index) {
+                        if (index === 0) return;
+                        var demand = demandsData[index];
+                        L.marker(loc).addTo(map).bindPopup(`<b>Customer ${index}</b><br>Demand: ${demand}`);
+                    });
+                    var routeColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+                    routesData.forEach(function(routeCoords, routeIndex) {
+                        if (routeCoords && routeCoords.length > 1) {
+                            L.polyline(routeCoords, { color: routeColors[routeIndex % routeColors.length], weight: 3, opacity: 0.7 }).addTo(map).bindTooltip(`Vehicle Route ${routeIndex + 1}`);
+                        }
+                    });
+                } catch (e) { console.error("Error initializing Leaflet map:", e); }
+            }
+        });
+    </script>
+    {% endif %} {# End if result #}
+
+    {# --- JavaScript for Geolocation Button --- #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const locationBtn = document.getElementById('use-current-location-btn');
+            const latInput = document.getElementById('latitude');
+            const lonInput = document.getElementById('longitude');
+            const locationNameInput = document.getElementById('location_name');
+            const statusSpan = document.getElementById('location-status');
+
+            if (locationNameInput) {
+                locationNameInput.addEventListener('input', function() { /* Clear coords on manual input */
+                    if (latInput) latInput.value = ''; if (lonInput) lonInput.value = '';
+                    if (statusSpan && statusSpan.style.color === 'green') { statusSpan.textContent = ''; }
+                    console.log('Cleared hidden coordinates due to manual input.');
+                });
+            }
+            if (locationBtn) { /* Geolocation button listener */
+                locationBtn.addEventListener('click', function() {
+                    if (!navigator.geolocation) { /* Check support */
+                         if(statusSpan){ statusSpan.textContent = 'Geolocation not supported.'; statusSpan.style.color = 'red';}
+                    } else {
+                        if(statusSpan){ statusSpan.textContent = 'Getting location...'; statusSpan.style.color = 'orange'; }
+                        navigator.geolocation.getCurrentPosition(geolocationSuccess, geolocationError, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+                    }
+                });
+            }
+        }); // End DOMContentLoaded listener for Geolocation
+
+        function geolocationSuccess(position) { /* Handle success */
+            const latitude  = position.coords.latitude; const longitude = position.coords.longitude;
+            const statusSpan = document.getElementById('location-status'); const latInput = document.getElementById('latitude');
+            const lonInput = document.getElementById('longitude'); const locationNameInput = document.getElementById('location_name');
+            if (latInput && lonInput && locationNameInput && statusSpan) {
+                latInput.value = latitude; lonInput.value = longitude;
+                locationNameInput.value = `(Current Location ~${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+                statusSpan.textContent = 'Location acquired!'; statusSpan.style.color = 'green';
+                console.log(`Geolocation Success - Lat: ${latitude}°, Lon: ${longitude}°`);
+            } else { if(statusSpan){ statusSpan.textContent = 'Error updating form.'; statusSpan.style.color = 'red'; }}
+        }
+        function geolocationError(error) { /* Handle error */
+             const statusSpan = document.getElementById('location-status'); const latInput = document.getElementById('latitude'); const lonInput = document.getElementById('longitude');
+            let message = 'Unable to retrieve location'; /* Default message */
+            switch(error.code) { /* Provide specific messages */
+                case error.PERMISSION_DENIED: message = "Geolocation denied."; break;
+                case error.POSITION_UNAVAILABLE: message = "Location unavailable."; break;
+                case error.TIMEOUT: message = "Location request timed out."; break;
+                case error.UNKNOWN_ERROR: message = "Unknown geolocation error."; break;
+            }
+            console.error("Geolocation Error:", error.code, error.message);
+            if (statusSpan) { statusSpan.textContent = message; statusSpan.style.color = 'red'; }
+            if (latInput) latInput.value = ''; if (lonInput) lonInput.value = ''; /* Clear coords */
+        }
+    </script>
+    {# --- End Geolocation Script --- #}
+
+{% endblock %}

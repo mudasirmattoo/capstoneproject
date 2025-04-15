@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}VRP Optimizer{% endblock %}</title> {# Allow pages to set their own title #}
+
+    {% load static %}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'vrp/output.css' %}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    {% block extra_head %}{% endblock %} {# For page-specific head elements #}
+
+     <style>
+        /* Custom style for map height */
+        #map { height: 500px; }
+        body { display: flex; flex-direction: column; min-height: 100vh; }
+        main { flex: 1; } /* Makes sure footer sticks to bottom */
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <nav class="bg-gray-800 text-white shadow-md">
+        <div class="container mx-auto max-w-6xl px-4 py-3 flex justify-between items-center">
+            <a href="{% url 'home' %}" class="text-xl font-bold hover:text-gray-300">
+                <span class="text-indigo-400">Route</span>Optimizer AI
+            </a>
+            <div>
+                <a href="{% url 'home' %}" class="px-3 py-2 hover:bg-gray-700 rounded-md text-sm font-medium">Home</a>
+                <a href="{% url 'optimize_routes_view' %}" class="px-3 py-2 hover:bg-gray-700 rounded-md text-sm font-medium">Optimizer</a>
+                {# Add other links as needed #}
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto max-w-4xl p-4 md:p-8">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="bg-gray-200 text-gray-600 text-center p-4 mt-auto">
+        <p>&copy; {% now "Y" %} VRP Capstone Project. All rights reserved.</p>
+         {# Add more footer info if desired #}
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    {% block javascript %}
+    {% endblock %}
+
+</body>
+</html>

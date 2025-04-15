@@ -1,0 +1,29 @@
+{% extends 'vrp/base.html' %}
+
+{% block title %}Home - VRP Optimizer AI{% endblock %}
+
+{% block content %}
+<div class="text-center px-4 py-8 md:py-16">
+    <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+        Welcome to <span class="text-indigo-600">RouteOptimizer AI</span>
+    </h1>
+    <p class="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+        Leveraging optimization algorithms and real-world data to find the most efficient routes for your vehicle fleet, saving time and resources.
+    </p>
+    <a href="{% url 'optimize_routes_view' %}"
+       class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-md text-lg transition duration-150 ease-in-out">
+        Go to Optimizer
+    </a>
+</div>
+
+<div class="mt-12 bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-2xl font-semibold text-gray-700 mb-4">About This Project</h2>
+    <p class="text-gray-600">
+        This capstone project demonstrates the application of the Capacitated Vehicle Routing Problem (CVRP) using Google OR-Tools.
+        It generates synthetic customer locations based on a chosen center point (via geocoding or browser location), retrieves real road distances
+        using OpenRouteService, and calculates optimized routes respecting vehicle capacities. The results are visualized on an interactive map.
+        Future enhancements could include incorporating machine learning for travel time prediction.
+    </p>
+    {# Add more details about your project #}
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{
+  "name": "capstone", 
+  "version": "1.0.0",
+  "description": "Django project using Tailwind CSS for VRP",
+  "scripts": {
+    "build": "npx tailwindcss -i ./vrp/static/vrp/src.css -o ./vrp/static/vrp/output.css --minify",
+    "watch": "npx tailwindcss -i ./vrp/static/vrp/src.css -o ./vrp/static/vrp/output.css --watch"
+  },
+  "author": "Mudasir", 
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^3.4.3",
+    "postcss": "^8.4.38",
+    "autoprefixer": "^10.4.19"
+  }
+}
